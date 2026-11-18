@@ -236,6 +236,7 @@ Neblex runs Rhai in its own sandbox, so the result in a Neblex flow is the one t
 
 ## Links
 
+- [Custom data transformation functions for messy dates, amounts and contacts](https://www.neblex.com/blog/custom-data-transformation-functions) (blog post with a worked example)
 - [Scripting with Rhai in Neblex](https://www.neblex.com/integration-fabric/docs/guide/rhai)
 - [Neblex Integration Fabric](https://www.neblex.com/integration-fabric)
 - [WebAssembly modules for Neblex](https://github.com/neblexhq/neblex-wasm-modules)
