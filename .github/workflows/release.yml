@@ -1,6 +1,7 @@
-# Publishes a release when a version tag (v1.2.3) is pushed: runs every module's test cases with
-# the Rhai engine, then creates the release with each module's .rhai file attached and SHA256SUMS.
+# Publishes a release when a version tag (v1.2.3) is pushed: runs every module's test cases through
+# the crate's packages, then creates the GitHub release with each module's .rhai file attached and SHA256SUMS.
 # Release notes come from .github/release-notes/<tag>.md when that file exists.
+# The crate is published to crates.io separately, with `cargo publish`.
 name: Release
 
 on:
@@ -20,7 +21,7 @@ jobs:
         run: rustup toolchain install stable --profile minimal
 
       - name: Run the test cases
-        run: cargo run --release --locked --manifest-path test-runner/Cargo.toml
+        run: cargo test --locked
 
       - name: Collect the modules
         run: |

@@ -1,3 +1,4 @@
+/target/
 test-runner/target/
 dist/
 .DS_Store

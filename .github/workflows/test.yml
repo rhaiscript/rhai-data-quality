@@ -1,5 +1,6 @@
-# Runs every module's test cases (<module>/test/cases.json) with the Rhai engine on each push
-# and pull request: each module on its own, then all modules loaded together.
+# Runs every module's test cases (<module>/test/cases.json) through the crate's packages on each
+# push and pull request: each module on its own, then all modules together. Also checks lints,
+# docs, the `sync` and `unchecked` builds, and the oldest supported Rhai version.
 name: Tests
 
 on:
@@ -10,6 +11,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -17,7 +21,37 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Rust
-        run: rustup toolchain install stable --profile minimal
+        run: rustup toolchain install stable --profile minimal --component clippy && rustup default stable
 
       - name: Run the test cases
-        run: cargo run --release --locked --manifest-path test-runner/Cargo.toml
+        run: cargo test --locked
+
+      - name: Run the test cases with Rhai's sync feature
+        run: cargo test --locked --features rhai/sync
+
+      - name: Run the test cases with Rhai's unchecked feature
+        run: cargo test --locked --features unchecked
+
+      - name: Lint
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: Build the docs
+        run: cargo doc --locked --no-deps
+        env:
+          RUSTDOCFLAGS: -D warnings
+
+      - name: Check the crate packages
+        run: cargo package --locked
+
+  oldest-rhai:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
+      - name: Run the test cases with Rhai 1.25.0
+        run: |
+          cargo update -p rhai --precise 1.25.0
+          cargo test

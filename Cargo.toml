@@ -1,0 +1,32 @@
+[package]
+name = "rhai-data-quality"
+version = "0.6.0"
+edition = "2021"
+description = "Rhai packages for cleaning business data: emails, phone numbers, names, companies, postcodes, dates in mixed formats, Excel serial dates, amounts, currencies and text."
+license = "MIT"
+repository = "https://github.com/rhaiscript/rhai-data-quality"
+documentation = "https://docs.rs/rhai-data-quality"
+readme = "README.md"
+keywords = ["rhai", "data-quality", "data-cleaning", "validation", "etl"]
+categories = ["text-processing", "parsing", "date-and-time", "value-formatting"]
+include = [
+    "src/**/*.rs",
+    "data-quality/data-quality.rhai",
+    "dates/dates.rhai",
+    "numbers/numbers.rhai",
+    "text/text.rhai",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+]
+
+[dependencies]
+rhai = "1.25"
+
+[dev-dependencies]
+rhai = { version = "1.25", features = ["serde"] }
+serde_json = "1"
+
+[features]
+# Turn this on when your engine uses Rhai's `unchecked` feature.
+unchecked = ["rhai/unchecked"]

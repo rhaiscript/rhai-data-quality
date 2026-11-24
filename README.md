@@ -1,8 +1,10 @@
 # rhai-data-quality
 
 [![Tests](https://github.com/rhaiscript/rhai-data-quality/actions/workflows/test.yml/badge.svg)](https://github.com/rhaiscript/rhai-data-quality/actions/workflows/test.yml)
+[![crates.io](https://img.shields.io/crates/v/rhai-data-quality.svg)](https://crates.io/crates/rhai-data-quality)
+[![docs.rs](https://img.shields.io/docsrs/rhai-data-quality)](https://docs.rs/rhai-data-quality)
 
-Reusable [Rhai](https://rhai.rs) functions for cleaning business data: contact and company records, dates, numbers and money, and text. Every function is pure and uses only core Rhai, with no host functions, file access or regular expressions, so the modules run in any Rhai engine, including sandboxed ones such as [Neblex Integration Fabric](https://www.neblex.com/integration-fabric) Code steps.
+Reusable [Rhai](https://rhai.rs) functions for cleaning business data: contact and company records, dates, numbers and money, and text. Every function is pure and uses only core Rhai, with no host functions, file access or regular expressions, so the modules run in any Rhai engine, including sandboxed ones such as [Neblex Integration Fabric](https://www.neblex.com/integration-fabric) Code steps. Use them from Rust as a crate, or load the `.rhai` files directly.
 
 | Module | What it does |
 |---|---|
@@ -11,26 +13,55 @@ Reusable [Rhai](https://rhai.rs) functions for cleaning business data: contact a
 | [numbers](numbers/numbers.rhai) | Reads numbers and amounts written in US or European formats, percentages and currency codes; banker's rounding, display formatting, percent change, safe division, durations, currency rounding, amounts in words and clamping |
 | [text](text/text.rhai) | Everyday text clean-up: remove accents, slugs, truncate at a word, initials, mask the middle of a value, left-pad codes, strip HTML snippets, count words, title, snake, camel and kebab case, hashtags and mentions, and typographic quotes and dashes to plain text |
 
-74 functions in all.
-
 Each module stands alone, and several can be loaded together.
 
 In Neblex, for jobs that are awkward in a script, such as parsing emails, XML, PDFs or fixed-width files, use a compiled module from [neblex-wasm-modules](https://github.com/neblexhq/neblex-wasm-modules) instead.
 
-## Use it in any Rhai project
+## Use it from Rust
 
-Each module is a plain `.rhai` file of functions. Compile it and call a function from Rust:
+```toml
+[dependencies]
+rhai = "1.25"
+rhai-data-quality = "0.6"
+```
+
+Register the package with an engine and every function is available to scripts:
 
 ```rust
-use rhai::{Engine, Scope};
+use rhai::Engine;
+use rhai::packages::Package;
+use rhai_data_quality::DataQualityPackage;
 
-let engine = Engine::new();
-let ast = engine.compile_file("data-quality/data-quality.rhai".into())?;
-let email: String = engine.call_fn(&mut Scope::new(), &ast, "normalize_email", (" Jane.Doe@Example.COM ".to_string(),))?;
+let mut engine = Engine::new();
+DataQualityPackage::new().register_into_engine(&mut engine);
+
+let email: String = engine.eval(r#"normalize_email(" Jane.Doe@Example.COM ")"#)?;
 // "jane.doe@example.com"
 ```
 
-Or import it from a script with the default file module resolver:
+Each module is also a package of its own, which you can register under a namespace:
+
+| Package | Module |
+|---|---|
+| `DataQualityPackage` | all four |
+| `ContactsPackage` | [data-quality](#data-quality) |
+| `DatesPackage` | [dates](#dates) |
+| `NumbersPackage` | [numbers](#numbers) |
+| `TextPackage` | [text](#text) |
+
+```rust
+use rhai_data_quality::DatesPackage;
+
+DatesPackage::new().register_into_engine_as(&mut engine, "dates");
+let iso: String = engine.eval(r#"dates::excel_serial_to_iso(45750)"#)?;
+// "2025-04-03"
+```
+
+A package compiles its scripts when it's created, so create it once and register it with as many engines as you need. It needs Rhai 1.25 or later, with floats, arrays, object maps, functions and modules turned on (the default). If your engine uses Rhai's `unchecked` feature, turn on this crate's `unchecked` feature too. The API is documented on [docs.rs](https://docs.rs/rhai-data-quality).
+
+## Use the script files directly
+
+Each module is a plain `.rhai` file of functions, so you can also import it from a script with the default file module resolver:
 
 ```rhai
 import "data-quality/data-quality" as dq;
@@ -247,19 +278,20 @@ Each module has a `test` folder with `cases.json` (test cases, each with an inpu
 | numbers | [110](numbers/test/cases.json) | all passed |
 | text | [70](text/test/cases.json) | all passed |
 
-All 476 cases pass in a Code step with the four modules imported together.
+Every case passes in a Code step with the four modules imported together.
 
-The same cases also run automatically on every change with the [Rhai](https://rhai.rs) engine (`test-runner/`), each module on its own and all four loaded together. To run them yourself from the repository root, with Rust installed:
+The same cases also run automatically on every change through the crate's packages with a stock [Rhai](https://rhai.rs) `Engine::new()`, each module on its own and all four together, on the current Rhai release and on Rhai 1.25. To run them yourself, with Rust installed:
 
 ```sh
-cargo run --release --manifest-path test-runner/Cargo.toml
+cargo test
 ```
 
-The automated run uses a stock `Engine::new()`, and the Neblex flow uses Neblex's sandboxed engine; a change is released only when both pass.
+The Neblex flow uses Neblex's sandboxed engine; a change is released only when both pass.
 
 ## Links
 
 - [Custom data transformation functions for messy dates, amounts and contacts](https://www.neblex.com/blog/custom-data-transformation-functions) (blog post with a worked example)
+- [API documentation on docs.rs](https://docs.rs/rhai-data-quality)
 - [The Rhai Book](https://rhai.rs/book/)
 - [Scripting with Rhai in Neblex](https://www.neblex.com/integration-fabric/docs/guide/rhai)
 - [Neblex Integration Fabric](https://www.neblex.com/integration-fabric)
