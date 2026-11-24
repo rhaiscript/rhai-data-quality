@@ -1,8 +1,8 @@
-# Neblex Rhai modules
+# rhai-data-quality
 
-[![Tests](https://github.com/neblexhq/neblex-rhai-modules/actions/workflows/test.yml/badge.svg)](https://github.com/neblexhq/neblex-rhai-modules/actions/workflows/test.yml)
+[![Tests](https://github.com/rhaiscript/rhai-data-quality/actions/workflows/test.yml/badge.svg)](https://github.com/rhaiscript/rhai-data-quality/actions/workflows/test.yml)
 
-Reusable [Rhai](https://www.neblex.com/integration-fabric/docs/guide/rhai) functions for [Neblex Integration Fabric](https://www.neblex.com/integration-fabric) flows. A module is a set of plain functions that a Code step imports by name. Rhai runs in a sandbox with no file, network or system access, so a module can only transform the values it's given.
+Reusable [Rhai](https://rhai.rs) functions for cleaning business data: contact and company records, dates, numbers and money, and text. Every function is pure and uses only core Rhai, with no host functions, file access or regular expressions, so the modules run in any Rhai engine, including sandboxed ones such as [Neblex Integration Fabric](https://www.neblex.com/integration-fabric) Code steps.
 
 | Module | What it does |
 |---|---|
@@ -13,9 +13,32 @@ Reusable [Rhai](https://www.neblex.com/integration-fabric/docs/guide/rhai) funct
 
 74 functions in all.
 
-Each module stands alone, and a Code step can import several of them at once.
+Each module stands alone, and several can be loaded together.
 
-For jobs that are awkward in a script, such as parsing emails, XML, PDFs or fixed-width files, use a compiled module from [neblex-wasm-modules](https://github.com/neblexhq/neblex-wasm-modules) instead.
+In Neblex, for jobs that are awkward in a script, such as parsing emails, XML, PDFs or fixed-width files, use a compiled module from [neblex-wasm-modules](https://github.com/neblexhq/neblex-wasm-modules) instead.
+
+## Use it in any Rhai project
+
+Each module is a plain `.rhai` file of functions. Compile it and call a function from Rust:
+
+```rust
+use rhai::{Engine, Scope};
+
+let engine = Engine::new();
+let ast = engine.compile_file("data-quality/data-quality.rhai".into())?;
+let email: String = engine.call_fn(&mut Scope::new(), &ast, "normalize_email", (" Jane.Doe@Example.COM ".to_string(),))?;
+// "jane.doe@example.com"
+```
+
+Or import it from a script with the default file module resolver:
+
+```rhai
+import "data-quality/data-quality" as dq;
+
+dq::phone_e164("(415) 555-0123", "1")   // "+14155550123"
+```
+
+In a debug build, Rhai's default nesting limits are lower than in a release build. If compiling a module fails with `ExprTooDeep`, call `engine.set_max_expr_depths(64, 32)` or build with `--release`.
 
 ## data-quality
 
@@ -55,7 +78,7 @@ Use it to clean records before they reach a CRM, ERP or warehouse, and to build 
 
 Each function returns a value and changes nothing else, so you can combine them in any order. Invalid input returns an empty or false result instead of stopping the flow, so you can route those records to review.
 
-### Use it in a flow
+### Use it in a Neblex flow
 
 1. In Neblex, add a Transform Module named `data-quality` and paste in [data-quality.rhai](data-quality/data-quality.rhai). The other modules work the same way, named `dates` and `numbers`. From an AI client connected to the [Neblex MCP server](https://github.com/neblexhq/neblex-mcp), you can ask it to create the module from this file instead.
 2. Add a Code step, set it to **Each record**, and add `data-quality` under **Imported modules**.
@@ -97,7 +120,7 @@ From there, a filter on `email_valid` or `missing` can send incomplete records t
 - `title_case_name` capitalizes every part, including particles such as "van" or "de".
 - `split_full_name` puts everything after the first word into `last_name`.
 - `name_match_key` knows about 80 common English nicknames (Bob, Bill, Liz, Katie ...) and only expands the first word; a single word is kept as written.
-- Rhai in Neblex has no regular expressions, so the checks are written character by character.
+- Core Rhai has no regular expressions, so the checks are written character by character.
 
 ## dates
 
@@ -215,7 +238,7 @@ Limits:
 
 ## Tests
 
-Each module has a `test` folder with `cases.json` (test cases, each with an input and the expected result) and `harness-script.rhai`, the Code step that runs them. To run them, build a flow with a Webhook trigger, an Unwind step on `cases`, and the harness script in a Code step set to Each record with the module imported. Send `cases.json` as the payload and every output record should have `pass: true`.
+Each module has a `test` folder with `cases.json` (test cases, each with an input and the expected result) and `harness-script.rhai`, the Code step that runs them. To run them in Neblex, build a flow with a Webhook trigger, an Unwind step on `cases`, and the harness script in a Code step set to Each record with the module imported. Send `cases.json` as the payload and every output record should have `pass: true`.
 
 | Module | Test cases | Result in our test |
 |---|---|---|
@@ -232,11 +255,12 @@ The same cases also run automatically on every change with the [Rhai](https://rh
 cargo run --release --manifest-path test-runner/Cargo.toml
 ```
 
-Neblex runs Rhai in its own sandbox, so the result in a Neblex flow is the one that counts; the automated run catches mistakes before a change reaches it.
+The automated run uses a stock `Engine::new()`, and the Neblex flow uses Neblex's sandboxed engine; a change is released only when both pass.
 
 ## Links
 
 - [Custom data transformation functions for messy dates, amounts and contacts](https://www.neblex.com/blog/custom-data-transformation-functions) (blog post with a worked example)
+- [The Rhai Book](https://rhai.rs/book/)
 - [Scripting with Rhai in Neblex](https://www.neblex.com/integration-fabric/docs/guide/rhai)
 - [Neblex Integration Fabric](https://www.neblex.com/integration-fabric)
 - [WebAssembly modules for Neblex](https://github.com/neblexhq/neblex-wasm-modules)

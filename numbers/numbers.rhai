@@ -1,5 +1,5 @@
-// Number and money cleanup functions for Neblex Code steps.
-// Import the module as "numbers" in a Code step, then call the functions directly,
+// Number and money cleanup functions for Rhai.
+// Load this file in any Rhai engine, or import it as "numbers" in a Neblex Code step, then call the functions directly,
 // for example item.amount = parse_number(item.amount, "auto");
 // Every function is pure: it reads its arguments and returns a value. Nothing is sent anywhere.
 

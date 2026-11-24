@@ -1,5 +1,5 @@
-// Date cleanup functions for Neblex Code steps.
-// Import the module as "dates" in a Code step, then call the functions directly,
+// Date cleanup functions for Rhai.
+// Load this file in any Rhai engine, or import it as "dates" in a Neblex Code step, then call the functions directly,
 // for example item.order_date = to_iso_date(item.order_date, "mdy");
 // Every function is pure and works on text and whole numbers only; results are ISO dates (YYYY-MM-DD).
 

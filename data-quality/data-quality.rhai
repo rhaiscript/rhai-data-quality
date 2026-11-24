@@ -1,5 +1,5 @@
-// Data quality functions for Neblex Code steps.
-// Import the module as "data-quality" in a Code step, then call the functions directly,
+// Data quality functions for Rhai.
+// Load this file in any Rhai engine, or import it as "data-quality" in a Neblex Code step, then call the functions directly,
 // for example item.email = normalize_email(item.email);
 // Every function is pure: it reads its arguments and returns a value. Nothing is sent anywhere.
 

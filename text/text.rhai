@@ -1,5 +1,5 @@
-// Text functions for Neblex Code steps.
-// Import the module as "text" in a Code step, then call the functions directly,
+// Text functions for Rhai.
+// Load this file in any Rhai engine, or import it as "text" in a Neblex Code step, then call the functions directly,
 // for example item.slug = slugify(item.product_name);
 // Every function is pure: it reads its arguments and returns a value. Nothing is sent anywhere.
 
